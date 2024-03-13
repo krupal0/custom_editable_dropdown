@@ -2311,7 +2311,7 @@ class _MenuAnchorScope extends InheritedWidget {
 /// MenuBar-specific private specialization of [MenuAnchor] so that it can act
 /// differently in regards to orientation, how open works, and what gets built.
 class _MenuBarAnchor extends MenuAnchor {
-  _MenuBarAnchor({
+  const _MenuBarAnchor({
     required List<Widget> menuChildren,
     MenuController? controller,
     required Clip clipBehavior,
@@ -2363,9 +2363,9 @@ class _MenuBarAnchorState extends _MenuAnchorState {
                 menuStyle: widget.style,
                 clipBehavior: widget.clipBehavior,
                 orientation: Axis.horizontal,
-                children: widget.menuChildren,
                 onScroll: (value) => widget.onScroll!(value),
                 scrollController: widget.scrollController,
+                children: widget.menuChildren,
               );
             }),
           ),
@@ -2632,7 +2632,7 @@ class MenuAcceleratorCallbackBinding extends InheritedWidget {
   /// Create a const [MenuAcceleratorCallbackBinding].
   ///
   /// The [child] parameter is required.
-  MenuAcceleratorCallbackBinding({
+  const MenuAcceleratorCallbackBinding({
     Key? key,
     this.onInvoke,
     this.hasSubmenu = false,
@@ -3675,8 +3675,8 @@ class _Submenu extends StatelessWidget {
                         clipBehavior: clipBehavior,
                         orientation: anchor._orientation,
                         crossAxisUnconstrained: crossAxisUnconstrained,
-                        children: menuChildren,
                         scrollController: scrollController,
+                        children: menuChildren,
                       ),
                     ),
                   ),
