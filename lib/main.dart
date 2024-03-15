@@ -158,10 +158,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
                 setState(() {});
               },
+                menuStyle: MenuStyle(
+                  backgroundColor: MaterialStateProperty.all(Colors.green.shade100)
+                ),
               dropdownMenuEntries: listAnimalFiltered
                       ?.map((e) => EditableDropdownMenuEntry<String>(
                             value: e,
                             label: e,
+                            style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all(Colors.green.shade100),
+                                padding: MaterialStateProperty.all(EdgeInsets.all(8)),
+                                textStyle: MaterialStateProperty.all(TextStyle(fontSize: 16)))
                           ))
                       .toList() ??
                   [],
@@ -170,6 +177,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 if (controller.position.extentAfter <= 0) {}
               },
               scrollController: scrollController,
+              isSearch: true,
+              fieldDecoration: InputDecoration(
+                labelText: "Animals",
+                hintText: "Please select animal from here",
+                suffixIcon: IconButton(
+                  onPressed:(){
+                    fullNameTextController.clear();
+                  },
+                  icon: Icon(Icons.clear),
+                ),
+              )
             ),
             cm.MenuAnchor(
               style: const MenuStyle(

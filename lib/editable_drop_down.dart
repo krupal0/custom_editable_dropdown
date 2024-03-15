@@ -19,15 +19,14 @@ const double _kDefaultHorizontalPadding = 0.0;
 
 class EditableDropdownMenuEntry<T> {
   /// Creates an entry that is used with [DropdownMenu.dropdownMenuEntries].
-  const EditableDropdownMenuEntry({
-    required this.value,
-    required this.label,
-    this.labelWidget,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.enabled = true,
-    this.style,
-  });
+  const EditableDropdownMenuEntry(
+      {required this.value,
+      required this.label,
+      this.labelWidget,
+      this.leadingIcon,
+      this.trailingIcon,
+      this.enabled = true,
+      this.style});
 
   /// the value used to identify the entry.
   ///
@@ -94,7 +93,9 @@ class EditableDropdownMenu<T> extends StatefulWidget {
       this.focusBorder,
       this.labelText,
       this.onScroll,
-      this.scrollController, this.child})
+      this.scrollController,
+      this.child,
+      required this.isSearch,this.fieldDecoration})
       : super(key: key);
 
   final Function(ScrollController controller)? onScroll;
@@ -144,6 +145,16 @@ class EditableDropdownMenu<T> extends StatefulWidget {
 
   final Widget? child;
 
+  /// Enable search in the dropdown
+  ///
+  final bool isSearch;
+
+
+  /// Customizes the input appearance.
+  ///
+  /// Null by default.
+  final InputDecoration? fieldDecoration;
+
   @override
   State<EditableDropdownMenu<T>> createState() => _DropdownMenuState<T>();
 }
@@ -154,6 +165,7 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
   late List<GlobalKey> buttonItemKeys;
   final cm.MenuController _controller = cm.MenuController();
   late final TextEditingController _textEditingController;
+  late final InputDecoration _decoration;
   late bool _enableFilter;
   late List<EditableDropdownMenuEntry<T>> filteredEntries;
   List<Widget>? _initialMenu;
@@ -165,15 +177,42 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
   void initState() {
     super.initState();
     _textEditingController = widget.controller ?? TextEditingController();
+    _decoration = widget.fieldDecoration ?? InputDecoration(
+      labelText: widget.labelText,
+      hintText: widget.hintText,
+      focusedBorder: widget.focusBorder,
+    );
+
+
+    if (widget.isSearch) {
+      _textEditingController.addListener(() {
+        if (_textEditingController.text.isNotEmpty) {
+          String text = _textEditingController.text;
+          final entry = widget.dropdownMenuEntries
+              .where((item) => item.label.toLowerCase().contains(text))
+              .toList();
+          if (entry.isNotEmpty) {
+            setState(() {
+              filteredEntries = entry;
+            });
+          }
+        } else {
+          setState(() {
+            filteredEntries = widget.dropdownMenuEntries;
+          });
+        }
+      });
+    }
     _enableFilter = widget.enableFilter;
     filteredEntries = widget.dropdownMenuEntries;
     buttonItemKeys = List<GlobalKey>.generate(
         filteredEntries.length, (int index) => GlobalKey());
-    _menuHasEnabledItem =
-        filteredEntries.any((EditableDropdownMenuEntry<T> entry) => entry.enabled);
+    _menuHasEnabledItem = filteredEntries
+        .any((EditableDropdownMenuEntry<T> entry) => entry.enabled);
 
     final int index = filteredEntries.indexWhere(
-        (EditableDropdownMenuEntry<T> entry) => entry.value == widget.initialSelection);
+        (EditableDropdownMenuEntry<T> entry) =>
+            entry.value == widget.initialSelection);
     if (index != -1) {
       _textEditingController.text = filteredEntries[index].label;
       _textEditingController.selection =
@@ -195,8 +234,8 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
       filteredEntries = widget.dropdownMenuEntries;
       buttonItemKeys = List<GlobalKey>.generate(
           filteredEntries.length, (int index) => GlobalKey());
-      _menuHasEnabledItem =
-          filteredEntries.any((EditableDropdownMenuEntry<T> entry) => entry.enabled);
+      _menuHasEnabledItem = filteredEntries
+          .any((EditableDropdownMenuEntry<T> entry) => entry.enabled);
     }
     if (oldWidget.leadingIcon != widget.leadingIcon) {
       refreshLeadingPadding();
@@ -257,7 +296,8 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
     return null;
   }
 
-  List<EditableDropdownMenuEntry<T>> filter(List<EditableDropdownMenuEntry<T>> entries,
+  List<EditableDropdownMenuEntry<T>> filter(
+      List<EditableDropdownMenuEntry<T>> entries,
       TextEditingController textEditingController) {
     final String filterText = textEditingController.text.toLowerCase();
     return entries
@@ -313,6 +353,7 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
 
       final cm.MenuItemButton menuItemButton = cm.MenuItemButton(
         key: enableScrollToHighlight ? buttonItemKeys[i] : null,
+        // TODO need to make style
         style: effectiveStyle,
         leadingIcon: entry.leadingIcon,
         trailingIcon: entry.trailingIcon,
@@ -384,17 +425,16 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
   void dispose() {
     super.dispose();
   }
-  
-  void onEditingCompleted(cm.MenuController controller){
+
+  void onEditingCompleted(cm.MenuController controller) {
     print("onEditingCompleteCalled");
     if (currentHighlight != null) {
       final EditableDropdownMenuEntry<T> entry =
-      filteredEntries[currentHighlight!];
+          filteredEntries[currentHighlight!];
       if (entry.enabled) {
         _textEditingController.text = entry.label;
         _textEditingController.selection =
-            TextSelection.collapsed(
-                offset: _textEditingController.text.length);
+            TextSelection.collapsed(offset: _textEditingController.text.length);
         widget.onSelected?.call(entry.value);
       }
     } else {
@@ -510,16 +550,12 @@ class _DropdownMenuState<T> extends State<EditableDropdownMenu<T>> {
                   key: _anchorKey,
                   controller: _textEditingController,
                   keyboardType: TextInputType.text,
-                mouseCursor: effectiveMouseCursor,
-                canRequestFocus: canRequestFocus(),
-                enableInteractiveSelection: canRequestFocus(),
-                onEditingComplete: () => onEditingCompleted(controller),
+                  mouseCursor: effectiveMouseCursor,
+                  canRequestFocus: canRequestFocus(),
+                  enableInteractiveSelection: canRequestFocus(),
+                  onEditingComplete: () => onEditingCompleted(controller),
                   onTap: () => handlePressed(controller),
-                  decoration: InputDecoration(
-                    labelText: widget.labelText,
-                    hintText: widget.hintText,
-                    focusedBorder: widget.focusBorder,
-                  ),
+                  decoration: _decoration,
                 )
                 /*TextField(
                     key: _anchorKey,
